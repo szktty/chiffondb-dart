@@ -63,10 +63,15 @@ class ChiffonDb {
 
     if (Platform.isMacOS || Platform.isIOS) {
       // Development build: cargo workspace output in the neighbouring chiffondb
-      // repo. `dart test` runs with cwd = tanabata-dart/.
+      // repo. `dart test` runs with cwd = chiffondb-dart/.
+      // Mirrors the search order in hook/build.dart _findLocalLib().
       candidates
         ..add('../chiffondb/chiffondb/target/debug/libchiffondb_ffi.dylib')
-        ..add('../chiffondb/chiffondb/target/release/libchiffondb_ffi.dylib');
+        ..add('../chiffondb/chiffondb/target/release/libchiffondb_ffi.dylib')
+        ..add('../chiffondb/target/debug/libchiffondb_ffi.dylib')
+        ..add('../chiffondb/target/release/libchiffondb_ffi.dylib')
+        ..add('../../chiffondb/target/debug/libchiffondb_ffi.dylib')
+        ..add('../../chiffondb/target/release/libchiffondb_ffi.dylib');
 
       // Packaged build: bundled framework name (resolved via @rpath).
       String framework(String a) =>
@@ -88,6 +93,10 @@ class ChiffonDb {
       candidates
         ..add('../chiffondb/chiffondb/target/debug/libchiffondb_ffi.so')
         ..add('../chiffondb/chiffondb/target/release/libchiffondb_ffi.so')
+        ..add('../chiffondb/target/debug/libchiffondb_ffi.so')
+        ..add('../chiffondb/target/release/libchiffondb_ffi.so')
+        ..add('../../chiffondb/target/debug/libchiffondb_ffi.so')
+        ..add('../../chiffondb/target/release/libchiffondb_ffi.so')
         ..add('libchiffondb_ffi.so');
       return candidates;
     }

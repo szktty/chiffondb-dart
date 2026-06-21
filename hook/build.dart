@@ -24,17 +24,27 @@ void main(List<String> args) async {
 
     // Use a locally built dylib if available; otherwise download from
     // GitHub Releases.
+    // Set CHIFFONDB_USE_RELEASE=1 to skip local search and always download
+    // the pre-built library from GitHub Releases.
+    const version = '0.1.0';
+    final useRelease = Platform.environment['CHIFFONDB_USE_RELEASE'] == '1';
     final packageRoot = input.packageRoot;
-    final localLib = _findLocalLib(packageRoot, os);
+    final localLib = useRelease ? null : _findLocalLib(packageRoot, os);
     if (localLib != null) {
       await localLib.copy(outFile.path);
     } else {
-      const version = '0.1.0';
       final zipUri = Uri.parse(
         'https://github.com/szktty/chiffondb/releases/download/'
         'v$version/${target.zipFileName}',
       );
       await _downloadAndExtract(zipUri, target.libFileName, outFile, version);
+    }
+
+    // Dart's native_assets bundler requires a single-architecture dylib on
+    // macOS/iOS. Thin the fat binary produced by the universal macOS release
+    // zip down to the target architecture via lipo.
+    if ((Platform.isMacOS || Platform.isIOS) && outFile.existsSync()) {
+      await _thinMacOSLibIfNeeded(outFile, arch);
     }
 
     output.assets.code.add(
@@ -177,4 +187,35 @@ To resolve this, choose one of the following:
   }
 
   await dest.writeAsBytes(entry.content as List<int>);
+}
+
+/// Thins a fat (universal) macOS dylib to the target architecture using lipo.
+///
+/// The macOS release zip ships a universal binary. Dart's native_assets
+/// bundler calls `otool` expecting a single-arch dylib, so we must extract
+/// the correct slice before handing the file to the output.
+Future<void> _thinMacOSLibIfNeeded(File lib, Architecture arch) async {
+  final archName = switch (arch) {
+    Architecture.arm64 => 'arm64',
+    Architecture.x64 => 'x86_64',
+    _ => null,
+  };
+  if (archName == null) return;
+
+  final result = await Process.run('lipo', ['-info', lib.path]);
+  final info = result.stdout as String;
+  // Already a thin binary for this arch — nothing to do.
+  if (info.contains('Non-fat file') || !info.contains('Architectures in')) {
+    return;
+  }
+
+  final tmp = File('${lib.path}.thin');
+  final thinResult = await Process.run(
+    'lipo',
+    [lib.path, '-thin', archName, '-output', tmp.path],
+  );
+  if (thinResult.exitCode != 0) {
+    throw StateError('lipo -thin failed: ${thinResult.stderr}');
+  }
+  await tmp.rename(lib.path);
 }
