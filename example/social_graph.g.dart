@@ -41,14 +41,16 @@ extension $PersonStoreExtension on ChiffonStore {
 
 /// Encodes a [Person] instance to a JSON string.
 String $encodePerson(Person instance) {
-  final map = <String, dynamic>{};
+  final map = <String, dynamic>{'name': instance.name, 'age': instance.age};
   return $chiffonEncodeJson(map);
 }
 
 /// Decodes a JSON string to a [Person] instance.
 Person $decodePerson(String json) {
   final map = $chiffonDecodeJson(json);
-  return Person();
+  return Person()
+    ..name = map['name'] as String
+    ..age = map['age'] as int;
 }
 
 /// Decodes a JSON array string to a list of [Person] instances.
@@ -61,12 +63,17 @@ List<Person> $decodeListPerson(String json) {
 
 /// Constructs a [Person] instance from a [Map].
 Person $decodePersonFromMap(Map<String, dynamic> map) {
-  return Person();
+  return Person()
+    ..name = map['name'] as String
+    ..age = map['age'] as int;
 }
 
 /// DSL fragment for [Person]. Used by [ChiffonStore.applyAllSchemas].
 const $PersonSchemaDsl = r'''
-node Person {}''';
+node Person {
+  name: String
+  age: Int
+}''';
 
 // ---- Company (NodeType) ----
 
@@ -103,14 +110,19 @@ extension $CompanyStoreExtension on ChiffonStore {
 
 /// Encodes a [Company] instance to a JSON string.
 String $encodeCompany(Company instance) {
-  final map = <String, dynamic>{};
+  final map = <String, dynamic>{
+    'name': instance.name,
+    'industry': instance.industry,
+  };
   return $chiffonEncodeJson(map);
 }
 
 /// Decodes a JSON string to a [Company] instance.
 Company $decodeCompany(String json) {
   final map = $chiffonDecodeJson(json);
-  return Company();
+  return Company()
+    ..name = map['name'] as String
+    ..industry = map['industry'] as String;
 }
 
 /// Decodes a JSON array string to a list of [Company] instances.
@@ -123,12 +135,17 @@ List<Company> $decodeListCompany(String json) {
 
 /// Constructs a [Company] instance from a [Map].
 Company $decodeCompanyFromMap(Map<String, dynamic> map) {
-  return Company();
+  return Company()
+    ..name = map['name'] as String
+    ..industry = map['industry'] as String;
 }
 
 /// DSL fragment for [Company]. Used by [ChiffonStore.applyAllSchemas].
 const $CompanySchemaDsl = r'''
-node Company {}''';
+node Company {
+  name: String
+  industry: String
+}''';
 
 // **************************************************************************
 // EdgeTypeGenerator
@@ -171,14 +188,14 @@ extension $FollowsStoreExtension on ChiffonStore {
 
 /// Encodes a [Follows] instance to a JSON string.
 String $encodeFollows(Follows instance) {
-  final map = <String, dynamic>{};
+  final map = <String, dynamic>{'since': instance.since.toIso8601String()};
   return $chiffonEncodeJson(map);
 }
 
 /// Decodes a JSON string to a [Follows] instance.
 Follows $decodeFollows(String json) {
   final map = $chiffonDecodeJson(json);
-  return Follows();
+  return Follows()..since = DateTime.parse(map['since'] as String);
 }
 
 /// Decodes a JSON array string to a list of [Follows] instances.
@@ -191,7 +208,7 @@ List<Follows> $decodeListFollows(String json) {
 
 /// Constructs a [Follows] instance from a [Map].
 Follows $decodeFollowsFromMap(Map<String, dynamic> map) {
-  return Follows();
+  return Follows()..since = DateTime.parse(map['since'] as String);
 }
 
 /// DSL fragment for [Follows]. Used by [ChiffonStore.applyAllSchemas].
@@ -199,6 +216,9 @@ const $FollowsSchemaDsl = r'''
 edge Follows {
   from: Person
   to: Person
+  props: {
+    since: DateTime
+  }
 }''';
 
 // ---- WorksAt (EdgeType<Person, Company>) ----
@@ -238,14 +258,14 @@ extension $WorksAtStoreExtension on ChiffonStore {
 
 /// Encodes a [WorksAt] instance to a JSON string.
 String $encodeWorksAt(WorksAt instance) {
-  final map = <String, dynamic>{};
+  final map = <String, dynamic>{'role': instance.role};
   return $chiffonEncodeJson(map);
 }
 
 /// Decodes a JSON string to a [WorksAt] instance.
 WorksAt $decodeWorksAt(String json) {
   final map = $chiffonDecodeJson(json);
-  return WorksAt();
+  return WorksAt()..role = map['role'] as String;
 }
 
 /// Decodes a JSON array string to a list of [WorksAt] instances.
@@ -258,7 +278,7 @@ List<WorksAt> $decodeListWorksAt(String json) {
 
 /// Constructs a [WorksAt] instance from a [Map].
 WorksAt $decodeWorksAtFromMap(Map<String, dynamic> map) {
-  return WorksAt();
+  return WorksAt()..role = map['role'] as String;
 }
 
 /// DSL fragment for [WorksAt]. Used by [ChiffonStore.applyAllSchemas].
@@ -266,4 +286,7 @@ const $WorksAtSchemaDsl = r'''
 edge WorksAt {
   from: Person
   to: Company
+  props: {
+    role: String
+  }
 }''';

@@ -1,12 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format width=80
 
+part of 'social_graph.dart';
+
 // **************************************************************************
 // SchemaLibraryGenerator
 // **************************************************************************
 
 // ignore_for_file: depend_on_referenced_packages
-import 'dart:convert' as _convert;
 
 // ---- ChiffonStore (auto-generated) ----
 
@@ -33,10 +34,10 @@ class ChiffonStore {
 
 // ---- JSON utilities (internal) ----
 
-String $chiffonEncodeJson(Map<String, dynamic> map) => _convert.jsonEncode(map);
+String $chiffonEncodeJson(Map<String, dynamic> map) => jsonEncode(map);
 
 Map<String, dynamic> $chiffonDecodeJson(String json) =>
-    (_convert.jsonDecode(json) as Map).cast<String, dynamic>();
+    (jsonDecode(json) as Map).cast<String, dynamic>();
 
 List<dynamic> $chiffonDecodeJsonList(String json) =>
-    _convert.jsonDecode(json) as List<dynamic>;
+    jsonDecode(json) as List<dynamic>;
