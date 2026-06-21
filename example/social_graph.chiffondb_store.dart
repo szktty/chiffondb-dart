@@ -1,17 +1,16 @@
-// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 // **************************************************************************
 // SchemaLibraryGenerator
 // **************************************************************************
 
 // ignore_for_file: depend_on_referenced_packages
-
-part of 'social_graph.dart';
+import 'dart:convert' as _convert;
 
 // ---- ChiffonStore (auto-generated) ----
 
-/// 全スキーマ DSL 定数リスト。各アノテーション付きクラスの断片を連結する。
+/// List of all schema DSL constants. Each annotated class contributes one fragment.
 const $allSchemaDsl = [
   $PersonSchemaDsl,
   $CompanySchemaDsl,
@@ -19,26 +18,25 @@ const $allSchemaDsl = [
   $WorksAtSchemaDsl,
 ];
 
-/// [Connection] をラップしてスキーマ適用と型安全操作を提供するクラス。
+/// Wraps a [Connection] and provides schema application and type-safe operations.
 class ChiffonStore {
   final Connection conn;
 
   const ChiffonStore(this.conn);
 
-  /// 全スキーマを applySchema に送信する（冪等）。
+  /// Applies all schemas to the database (idempotent).
   Future<void> applyAllSchemas() {
     final dsl = $allSchemaDsl.join('\n');
     return conn.applySchema(schemaText: dsl);
   }
 }
 
-// ---- JSON utilities (内部使用) ----
+// ---- JSON utilities (internal) ----
 
-String $chiffonEncodeJson(Map<String, dynamic> map) =>
-    jsonEncode(map);
+String $chiffonEncodeJson(Map<String, dynamic> map) => _convert.jsonEncode(map);
 
 Map<String, dynamic> $chiffonDecodeJson(String json) =>
-    (jsonDecode(json) as Map).cast<String, dynamic>();
+    (_convert.jsonDecode(json) as Map).cast<String, dynamic>();
 
 List<dynamic> $chiffonDecodeJsonList(String json) =>
-    jsonDecode(json) as List<dynamic>;
+    _convert.jsonDecode(json) as List<dynamic>;
