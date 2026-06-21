@@ -1,0 +1,2 @@
+# Run test suites serially to avoid concurrent FFI library initialization.
+concurrency: 1

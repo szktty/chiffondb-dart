@@ -1,0 +1,4 @@
+# Internal development files — not part of the published package
+archive/
+dart_generator/
+doc/
