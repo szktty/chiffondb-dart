@@ -212,6 +212,10 @@ The package hook fetches the pre-built native library from GitHub Releases on fi
 | `CHIFFONDB_USE_RELEASE=1` | Force download from GitHub Releases even if a local build exists |
 | `CHIFFONDB_HOOK_SKIP=1` | Skip the hook entirely (FFI unavailable) |
 
+## Author
+
+SUZUKI Tetsuya <tetsuya.suzuki@gmail.com>
+
 ## License
 
 [Apache License 2.0](LICENSE)
