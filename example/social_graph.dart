@@ -49,17 +49,23 @@ Future<void> main() async {
   await store.applyAllSchemas();
 
   // Insert nodes.
-  final aliceId = await store.insertPerson(Person()
-    ..name = 'Alice'
-    ..age = 30);
+  final aliceId = await store.insertPerson(
+    Person()
+      ..name = 'Alice'
+      ..age = 30,
+  );
 
-  final bobId = await store.insertPerson(Person()
-    ..name = 'Bob'
-    ..age = 25);
+  final bobId = await store.insertPerson(
+    Person()
+      ..name = 'Bob'
+      ..age = 25,
+  );
 
-  final acmeId = await store.insertCompany(Company()
-    ..name = 'ACME Corp'
-    ..industry = 'Technology');
+  final acmeId = await store.insertCompany(
+    Company()
+      ..name = 'ACME Corp'
+      ..industry = 'Technology',
+  );
 
   // Insert edges.
   await store.insertFollows(aliceId, bobId, Follows()..since = DateTime.now());

@@ -73,17 +73,17 @@ _Target _resolveTarget(OS os, Architecture arch) {
   return switch (os) {
     // Universal binary — arch does not matter.
     OS.macOS => const _Target(
-        zipFileName: 'libchiffondb_ffi-macos-universal.zip',
-        libFileName: 'libchiffondb_ffi.dylib',
-      ),
+      zipFileName: 'libchiffondb_ffi-macos-universal.zip',
+      libFileName: 'libchiffondb_ffi.dylib',
+    ),
     OS.linux => const _Target(
-        zipFileName: 'libchiffondb_ffi-linux-x86_64.zip',
-        libFileName: 'libchiffondb_ffi.so',
-      ),
+      zipFileName: 'libchiffondb_ffi-linux-x86_64.zip',
+      libFileName: 'libchiffondb_ffi.so',
+    ),
     OS.windows => const _Target(
-        zipFileName: 'chiffondb_ffi-windows-x86_64.zip',
-        libFileName: 'chiffondb_ffi.dll',
-      ),
+      zipFileName: 'chiffondb_ffi-windows-x86_64.zip',
+      libFileName: 'chiffondb_ffi.dll',
+    ),
     _ => throw UnsupportedError('Unsupported OS: $os'),
   };
 }
@@ -129,9 +129,9 @@ File? _findLocalLib(Uri packageRoot, OS os) {
 
   // 3. Conventional relative paths.
   final candidates = [
-    packageRoot.resolve('../chiffondb/chiffondb/'),  // chiffondb-ffi workspace
-    packageRoot.resolve('../chiffondb/'),             // workspace root one level up
-    packageRoot.resolve('../../chiffondb/'),          // workspace root two levels up
+    packageRoot.resolve('../chiffondb/chiffondb/'), // chiffondb-ffi workspace
+    packageRoot.resolve('../chiffondb/'), // workspace root one level up
+    packageRoot.resolve('../../chiffondb/'), // workspace root two levels up
   ];
   for (final root in candidates) {
     for (final profile in ['release', 'debug']) {
@@ -210,10 +210,13 @@ Future<void> _thinMacOSLibIfNeeded(File lib, Architecture arch) async {
   }
 
   final tmp = File('${lib.path}.thin');
-  final thinResult = await Process.run(
-    'lipo',
-    [lib.path, '-thin', archName, '-output', tmp.path],
-  );
+  final thinResult = await Process.run('lipo', [
+    lib.path,
+    '-thin',
+    archName,
+    '-output',
+    tmp.path,
+  ]);
   if (thinResult.exitCode != 0) {
     throw StateError('lipo -thin failed: ${thinResult.stderr}');
   }

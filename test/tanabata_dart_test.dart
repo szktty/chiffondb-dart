@@ -59,7 +59,11 @@ void main() {
       );
       final projectRid = await db.insertNode(
         typeName: 'Project',
-        propsJson: jsonEncode({'id': 'p1', 'title': 'Alpha', 'isArchived': false}),
+        propsJson: jsonEncode({
+          'id': 'p1',
+          'title': 'Alpha',
+          'isArchived': false,
+        }),
       );
       await db.insertEdge(
         typeName: 'OWNS',
@@ -76,10 +80,17 @@ void main() {
           {
             'action': 'OutNodes',
             'label': 'Project',
-            'filter': {'property': 'isArchived', 'operator': 'Equals', 'value': false},
+            'filter': {
+              'property': 'isArchived',
+              'operator': 'Equals',
+              'value': false,
+            },
           },
         ],
-        'collect': {'type': 'Nodes', 'properties': ['id', 'title']},
+        'collect': {
+          'type': 'Nodes',
+          'properties': ['id', 'title'],
+        },
       });
 
       final resultJson = await db.executeTraversal(commandJson: command);
@@ -101,7 +112,11 @@ void main() {
       );
       final projectRid = await db.insertNode(
         typeName: 'Project',
-        propsJson: jsonEncode({'id': 'p1', 'title': 'Alpha', 'isArchived': false}),
+        propsJson: jsonEncode({
+          'id': 'p1',
+          'title': 'Alpha',
+          'isArchived': false,
+        }),
       );
       await db.insertEdge(
         typeName: 'OWNS',
@@ -115,7 +130,10 @@ void main() {
         'version': 1,
         'start': {'type': 'Node', 'label': 'User', 'key': 'id', 'value': 'u1'},
         'steps': [],
-        'collect': {'type': 'Nodes', 'properties': ['id']},
+        'collect': {
+          'type': 'Nodes',
+          'properties': ['id'],
+        },
       });
 
       expect(
@@ -161,7 +179,10 @@ void main() {
         'version': 1,
         'start': {'type': 'AllNodes', 'label': 'User'},
         'steps': [],
-        'collect': {'type': 'Nodes', 'properties': ['id']},
+        'collect': {
+          'type': 'Nodes',
+          'properties': ['id'],
+        },
       });
 
       final resultJson = await db.executeTraversal(commandJson: command);
@@ -187,7 +208,10 @@ void main() {
         'version': 1,
         'start': {'type': 'AllNodes', 'label': 'User'},
         'steps': [],
-        'collect': {'type': 'Nodes', 'properties': ['id']},
+        'collect': {
+          'type': 'Nodes',
+          'properties': ['id'],
+        },
       });
       final resultJson = await db2.executeTraversal(commandJson: command);
       await db2.close();
