@@ -14,16 +14,16 @@ edge MEMBER { from: Person to: Group props: { role: String } }
 
 // ---- Model (in-memory expected state) ----
 
-class _NodeModel {
-  _NodeModel(this.rid, this.typeName, this.idProp);
+class NodeModel {
+  NodeModel(this.rid, this.typeName, this.idProp);
   final RecordId rid;
   final String typeName;
   final String idProp;
   String ridKey() => '${rid.page}:${rid.slot}';
 }
 
-class _EdgeModel {
-  _EdgeModel(this.rid, this.fromKey, this.toKey);
+class EdgeModel {
+  EdgeModel(this.rid, this.fromKey, this.toKey);
   final RecordId rid;
   final String fromKey;
   final String toKey;
@@ -31,16 +31,16 @@ class _EdgeModel {
 }
 
 class GraphState {
-  final _nodes = <String, _NodeModel>{};
-  final _edges = <String, _EdgeModel>{};
+  final _nodes = <String, NodeModel>{};
+  final _edges = <String, EdgeModel>{};
   int _nodeSeq = 0;
   int _groupSeq = 0;
 
   String nextPersonId() => 'p${_nodeSeq++}';
   String nextGroupId() => 'g${_groupSeq++}';
 
-  void addNode(_NodeModel m) => _nodes[m.ridKey()] = m;
-  void addEdge(_EdgeModel e) => _edges[e.ridKey()] = e;
+  void addNode(NodeModel m) => _nodes[m.ridKey()] = m;
+  void addEdge(EdgeModel e) => _edges[e.ridKey()] = e;
 
   void removeNode(RecordId rid) {
     final key = '${rid.page}:${rid.slot}';
@@ -49,22 +49,19 @@ class GraphState {
     _edges.removeWhere((_, e) => e.fromKey == key || e.toKey == key);
   }
 
-  void removeEdge(RecordId rid) =>
-      _edges.remove('${rid.page}:${rid.slot}');
+  void removeEdge(RecordId rid) => _edges.remove('${rid.page}:${rid.slot}');
 
-  List<_NodeModel> persons() =>
+  List<NodeModel> persons() =>
       _nodes.values.where((n) => n.typeName == 'Person').toList();
 
-  List<_NodeModel> groups() =>
+  List<NodeModel> groups() =>
       _nodes.values.where((n) => n.typeName == 'Group').toList();
 
-  List<_EdgeModel> get edges => _edges.values.toList();
+  List<EdgeModel> get edges => _edges.values.toList();
 
-  bool hasNode(RecordId rid) =>
-      _nodes.containsKey('${rid.page}:${rid.slot}');
+  bool hasNode(RecordId rid) => _nodes.containsKey('${rid.page}:${rid.slot}');
 
-  bool hasEdge(RecordId rid) =>
-      _edges.containsKey('${rid.page}:${rid.slot}');
+  bool hasEdge(RecordId rid) => _edges.containsKey('${rid.page}:${rid.slot}');
 }
 
 // ---- System (the real database) ----
@@ -113,8 +110,8 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
         },
         nextState: (s) {},
         postcondition: (s, result) {
-          final (id, rid) = result as (String, RecordId);
-          s.addNode(_NodeModel(rid, 'Person', id));
+          final (id, rid) = result;
+          s.addNode(NodeModel(rid, 'Person', id));
           return true;
         },
       ),
@@ -132,8 +129,8 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
         },
         nextState: (s) {},
         postcondition: (s, result) {
-          final (id, rid) = result as (String, RecordId);
-          s.addNode(_NodeModel(rid, 'Group', id));
+          final (id, rid) = result;
+          s.addNode(NodeModel(rid, 'Group', id));
           return true;
         },
       ),
@@ -144,8 +141,7 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
       commands.add(
         Action0(
           'insertEdge',
-          precondition: (s) =>
-              s.persons().isNotEmpty && s.groups().isNotEmpty,
+          precondition: (s) => s.persons().isNotEmpty && s.groups().isNotEmpty,
           run: (sys) async {
             final person = s.persons().first;
             final group = s.groups().first;
@@ -159,9 +155,8 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
           },
           nextState: (s) {},
           postcondition: (s, result) {
-            final (fromKey, toKey, rid) =
-                result as (String, String, RecordId);
-            s.addEdge(_EdgeModel(rid, fromKey, toKey));
+            final (fromKey, toKey, rid) = result;
+            s.addEdge(EdgeModel(rid, fromKey, toKey));
             return true;
           },
         ),
@@ -176,16 +171,15 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
           'verifyPersonProps',
           precondition: (s) => s.persons().isNotEmpty,
           run: (sys) async {
-            final propsJson =
-                await sys.db.getNodeProperties(rid: person.rid);
+            final propsJson = await sys.db.getNodeProperties(rid: person.rid);
             return jsonDecode(propsJson) as Map;
           },
           nextState: (s) {},
           postcondition: (s, result) {
-            final props = result as Map;
+            final props = result;
             final model = s.persons().firstWhere(
               (n) => n.ridKey() == person.ridKey(),
-              orElse: () => _NodeModel(person.rid, 'Person', ''),
+              orElse: () => NodeModel(person.rid, 'Person', ''),
             );
             // id property matches expected value.
             return props['id'] == model.idProp;
@@ -204,7 +198,7 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
           },
           nextState: (s) {},
           postcondition: (s, result) {
-            final rid = result as RecordId;
+            final rid = result;
             s.removeNode(rid);
             return true;
           },
@@ -224,7 +218,7 @@ final class GraphBehavior extends Behavior<GraphState, GraphSystem> {
           },
           nextState: (s) {},
           postcondition: (s, result) {
-            final rid = result as RecordId;
+            final rid = result;
             s.removeEdge(rid);
             return true;
           },
@@ -243,11 +237,7 @@ void main() {
 
   group('stateful: graph CRUD sequence', () {
     property('random CRUD maintains topology invariants', () {
-      runBehavior(
-        GraphBehavior(),
-        maxCycles: 10,
-        maxSteps: 20,
-      );
+      runBehavior(GraphBehavior(), maxCycles: 10, maxSteps: 20);
     });
   });
 }

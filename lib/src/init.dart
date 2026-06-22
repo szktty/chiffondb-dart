@@ -21,10 +21,18 @@ class ChiffonDb {
   /// On supported platforms the library is loaded from the native_assets
   /// output directory. Throws [UnsupportedError] on unsupported platforms.
   static Future<void> init() async {
-    final lib = _openNativeLibrary();
-    await RustLib.init(externalLibrary: lib);
+    await RustLib.init(externalLibrary: _openNativeLibrary());
   }
 
+  // Opens the native library by trying each candidate path in order.
+  //
+  // flutter_rust_bridge loads the library via DynamicLibrary.lookup (not the
+  // @Native assetId mechanism), so the native_assets mapping written by
+  // hooks_runner is not resolved automatically. We must therefore open the
+  // bundled library explicitly — `.dart_tool/lib/libchiffondb_ffi.{so,dylib}`,
+  // the path hook/build.dart's CodeAsset is copied to — alongside local dev
+  // builds. Passing externalLibrary: null would not help: the frb default
+  // loader only tries the (stale) ioDirectory and the bare file name.
   static ExternalLibrary _openNativeLibrary() {
     if (Platform.isAndroid) {
       return ExternalLibrary.open('libchiffondb_ffi.so');
@@ -63,10 +71,18 @@ class ChiffonDb {
 
     if (Platform.isMacOS || Platform.isIOS) {
       // Development build: cargo workspace output in the neighbouring chiffondb
-      // repo. `dart test` runs with cwd = tanabata-dart/.
+      // repo. `dart test` runs with cwd = chiffondb-dart/.
+      // Mirrors the search order in hook/build.dart _findLocalLib().
       candidates
         ..add('../chiffondb/chiffondb/target/debug/libchiffondb_ffi.dylib')
-        ..add('../chiffondb/chiffondb/target/release/libchiffondb_ffi.dylib');
+        ..add('../chiffondb/chiffondb/target/release/libchiffondb_ffi.dylib')
+        ..add('../chiffondb/target/debug/libchiffondb_ffi.dylib')
+        ..add('../chiffondb/target/release/libchiffondb_ffi.dylib')
+        ..add('../../chiffondb/target/debug/libchiffondb_ffi.dylib')
+        ..add('../../chiffondb/target/release/libchiffondb_ffi.dylib');
+
+      // hook/build.dart output: `.dart_tool/lib/` relative to package root.
+      candidates.add('.dart_tool/lib/libchiffondb_ffi.dylib');
 
       // Packaged build: bundled framework name (resolved via @rpath).
       String framework(String a) =>
@@ -88,12 +104,19 @@ class ChiffonDb {
       candidates
         ..add('../chiffondb/chiffondb/target/debug/libchiffondb_ffi.so')
         ..add('../chiffondb/chiffondb/target/release/libchiffondb_ffi.so')
+        ..add('../chiffondb/target/debug/libchiffondb_ffi.so')
+        ..add('../chiffondb/target/release/libchiffondb_ffi.so')
+        ..add('../../chiffondb/target/debug/libchiffondb_ffi.so')
+        ..add('../../chiffondb/target/release/libchiffondb_ffi.so')
+        // hook/build.dart output: `.dart_tool/lib/` relative to package root.
+        ..add('.dart_tool/lib/libchiffondb_ffi.so')
         ..add('libchiffondb_ffi.so');
       return candidates;
     }
 
     if (Platform.isWindows) {
       candidates
+        ..add('.dart_tool/lib/chiffondb_ffi.dll')
         ..add('chiffondb_ffi.dll');
       return candidates;
     }
