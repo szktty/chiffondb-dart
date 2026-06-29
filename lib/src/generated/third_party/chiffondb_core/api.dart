@@ -15,8 +15,22 @@ abstract class Connection implements RustOpaqueInterface {
   /// Adds an additional label to an edge (by type name).
   Future<void> addEdgeLabel({required RecordId rid, required String typeName});
 
+  /// Adds a label to an edge, registering the name if unknown.
+  /// Returns `{id, created}` as a JSON object string.
+  Future<String> addEdgeLabelDynamic({
+    required RecordId rid,
+    required String typeName,
+  });
+
   /// Adds an additional label to a node (by type name).
   Future<void> addNodeLabel({required RecordId rid, required String typeName});
+
+  /// Adds a label to a node, registering the name if unknown.
+  /// Returns `{id, created}` as a JSON object string.
+  Future<String> addNodeLabelDynamic({
+    required RecordId rid,
+    required String typeName,
+  });
 
   /// Parses, validates, and saves the schema text to the database.
   Future<void> applySchema({required String schemaText});
@@ -118,6 +132,14 @@ abstract class Connection implements RustOpaqueInterface {
   /// Inserts a node by type name.
   Future<RecordId> insertNode({
     required String typeName,
+    required String propsJson,
+  });
+
+  /// Inserts a node, registering any unknown label names on the fly. Returns the new node's
+  /// RecordId and a JSON object string mapping each label name to `{id, created}`.
+  Future<DynamicInsertResult> insertNodeWithDynamicLabels({
+    required String primaryType,
+    required List<String> additionalLabels,
     required String propsJson,
   });
 
@@ -223,6 +245,26 @@ abstract class Connection implements RustOpaqueInterface {
   /// Runs integrity checks and returns a list of warning strings.
   /// An empty list means the database is healthy.
   Future<List<String>> verify();
+}
+
+/// Result of a dynamic-label node insert: the new node's RecordId plus a JSON object
+/// string mapping each label name to `{"id":<u16>,"created":<bool>}`.
+class DynamicInsertResult {
+  final RecordId rid;
+  final String assignmentsJson;
+
+  const DynamicInsertResult({required this.rid, required this.assignmentsJson});
+
+  @override
+  int get hashCode => rid.hashCode ^ assignmentsJson.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DynamicInsertResult &&
+          runtimeType == other.runtimeType &&
+          rid == other.rid &&
+          assignmentsJson == other.assignmentsJson;
 }
 
 class RecordId {

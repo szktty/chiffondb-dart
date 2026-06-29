@@ -50,6 +50,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RecordId dco_decode_box_autoadd_record_id(dynamic raw);
 
   @protected
+  DynamicInsertResult dco_decode_dynamic_insert_result(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
@@ -111,6 +114,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RecordId sse_decode_box_autoadd_record_id(SseDeserializer deserializer);
+
+  @protected
+  DynamicInsertResult sse_decode_dynamic_insert_result(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
@@ -181,6 +189,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_record_id(
     RecordId self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_dynamic_insert_result(
+    DynamicInsertResult self,
     SseSerializer serializer,
   );
 
