@@ -2,4 +2,6 @@
 
 ## Session Work Log
 
-Record ongoing work from AI sessions in `../chiffondb-private/docs/working.md`.
+**At the start of every session, and again before ending one (or after any meaningful
+chunk of work), use the `working-log` skill** (`.claude/skills/working-log/SKILL.md`)
+to resume from / append to `../chiffondb-private/docs/working.md`.
