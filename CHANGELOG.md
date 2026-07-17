@@ -1,7 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
+- Track ChiffonDB core v0.2.0. Storage-internal improvements only (insertion
+  O(1) via free-slot hints, property-store space reclaim) — no FFI signature
+  changes beyond the dynamic-label API already listed below. **Breaking:**
+  on-disk format VERSION bumped 8 → 10; existing `.chiffon` files created with
+  0.1.0 cannot be opened by 0.2.0.
 - **FFI/binding change.** Expose ChiffonDB's dynamic-label API: regenerated the
   flutter_rust_bridge bindings to add `Connection.insertNodeWithDynamicLabels`,
   `addNodeLabelDynamic`, and `addEdgeLabelDynamic`, plus the

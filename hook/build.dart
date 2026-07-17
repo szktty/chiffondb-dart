@@ -26,7 +26,7 @@ void main(List<String> args) async {
     // GitHub Releases.
     // Set CHIFFONDB_USE_RELEASE=1 to skip local search and always download
     // the pre-built library from GitHub Releases.
-    const version = '0.1.0';
+    const version = '0.2.0';
     final useRelease = Platform.environment['CHIFFONDB_USE_RELEASE'] == '1';
     final packageRoot = input.packageRoot;
     final localLib = useRelease ? null : _findLocalLib(packageRoot, os);
