@@ -84,7 +84,14 @@ class ChiffonDb {
       // hook/build.dart output: `.dart_tool/lib/` relative to package root.
       candidates.add('.dart_tool/lib/libchiffondb_ffi.dylib');
 
-      // Packaged build: bundled framework name (resolved via @rpath).
+      // Packaged build (Flutter native_assets): the dylib is bundled as a
+      // framework named after the CodeAsset (`chiffondb_ffi`), with no arch
+      // suffix — `chiffondb_ffi.framework/chiffondb_ffi`, resolved via @rpath.
+      // This is what `flutter run` / `flutter build macos` produce.
+      candidates.add('chiffondb_ffi.framework/chiffondb_ffi');
+
+      // Packaged build (arch-suffixed): the naming produced by `release.yml`
+      // for prebuilt GitHub Releases artifacts.
       String framework(String a) =>
           'chiffondb_ffi-$a-apple-darwin.framework/'
           'chiffondb_ffi-$a-apple-darwin';
