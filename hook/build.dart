@@ -17,6 +17,18 @@ void main(List<String> args) async {
     final os = input.config.code.targetOS;
     final arch = input.config.code.targetArchitecture;
 
+    // macOS / iOS are arm64-only. Apple is winding down Intel Mac support, so
+    // we no longer ship x86_64 slices for Apple platforms.
+    //
+    // Flutter still invokes this hook once per architecture when building a
+    // universal binary, so we cannot refuse outright — we simply contribute no
+    // asset for x64. Flutter unions the per-architecture assets before calling
+    // `lipo -create`, so the arm64 slice alone is passed through unchanged.
+    // Throwing here instead would break `flutter build macos` entirely.
+    if ((os == OS.macOS || os == OS.iOS) && arch == Architecture.x64) {
+      return;
+    }
+
     final target = _resolveTarget(os, arch);
     final outFile = File(
       p.join(input.outputDirectory.toFilePath(), target.libFileName),
@@ -29,7 +41,7 @@ void main(List<String> args) async {
     const version = '0.2.0';
     final useRelease = Platform.environment['CHIFFONDB_USE_RELEASE'] == '1';
     final packageRoot = input.packageRoot;
-    final localLib = useRelease ? null : _findLocalLib(packageRoot, os);
+    final localLib = useRelease ? null : await _findLocalLib(packageRoot, os, arch);
     if (localLib != null) {
       await localLib.copy(outFile.path);
     } else {
@@ -71,7 +83,9 @@ class _Target {
 
 _Target _resolveTarget(OS os, Architecture arch) {
   return switch (os) {
-    // Universal binary — arch does not matter.
+    // The release zip is still a universal binary (arm64 + x86_64); the
+    // x86_64 slice is discarded by _thinMacOSLibIfNeeded. Only arm64 targets
+    // reach here — x64 is rejected in main().
     OS.macOS => const _Target(
       zipFileName: 'libchiffondb_ffi-macos-universal.zip',
       libFileName: 'libchiffondb_ffi.dylib',
@@ -98,7 +112,12 @@ _Target _resolveTarget(OS os, Architecture arch) {
 ///    - `../chiffondb/chiffondb/target/` (chiffondb repo next to package)
 ///    - `../chiffondb/target/`           (workspace root one level up)
 ///    - `../../chiffondb/target/`        (workspace root two levels up)
-File? _findLocalLib(Uri packageRoot, OS os) {
+///
+/// On macOS/iOS every candidate is additionally checked with `lipo -info` and
+/// skipped unless it actually contains [arch]. A local cargo build only
+/// produces the host architecture, so without this check a host-arm64 dylib
+/// would silently be handed to a non-arm64 target.
+Future<File?> _findLocalLib(Uri packageRoot, OS os, Architecture arch) async {
   final String localName;
   switch (os) {
     case OS.macOS:
@@ -115,7 +134,7 @@ File? _findLocalLib(Uri packageRoot, OS os) {
   final explicitLib = Platform.environment['CHIFFONDB_CORE_LIB'];
   if (explicitLib != null && explicitLib.isNotEmpty) {
     final f = File(explicitLib);
-    if (f.existsSync()) return f;
+    if (f.existsSync() && await _libHasArch(f, os, arch)) return f;
   }
 
   // 2. Explicit workspace root.
@@ -123,7 +142,7 @@ File? _findLocalLib(Uri packageRoot, OS os) {
   if (explicitRoot != null && explicitRoot.isNotEmpty) {
     for (final profile in ['release', 'debug']) {
       final f = File(p.join(explicitRoot, 'target', profile, localName));
-      if (f.existsSync()) return f;
+      if (f.existsSync() && await _libHasArch(f, os, arch)) return f;
     }
   }
 
@@ -136,12 +155,49 @@ File? _findLocalLib(Uri packageRoot, OS os) {
   for (final root in candidates) {
     for (final profile in ['release', 'debug']) {
       final f = File(root.resolve('target/$profile/$localName').toFilePath());
-      if (f.existsSync()) return f;
+      if (f.existsSync() && await _libHasArch(f, os, arch)) return f;
     }
   }
 
   return null;
 }
+
+/// Returns whether [lib] contains a slice for [arch].
+///
+/// Only Mach-O binaries can be inspected here (via `lipo`), so on non-Apple
+/// targets — and when `lipo` is unavailable, e.g. a Linux/Windows host — this
+/// returns true and leaves the file's suitability to the caller as before.
+Future<bool> _libHasArch(File lib, OS os, Architecture arch) async {
+  if (os != OS.macOS && os != OS.iOS) return true;
+
+  final archName = _appleArchName(arch);
+  if (archName == null) return false;
+
+  final ProcessResult result;
+  try {
+    result = await Process.run('lipo', ['-info', lib.path]);
+  } on ProcessException {
+    return true;
+  }
+  if (result.exitCode != 0) return false;
+
+  final info = result.stdout as String;
+  // `lipo -info` prints either
+  //   "Non-fat file: <path> is architecture: arm64"
+  // or
+  //   "Architectures in the fat file: <path> are: x86_64 arm64".
+  // Match on word boundaries so `arm64` does not match `arm64e`.
+  final archs = info.split(':').last.trim().split(RegExp(r'\s+'));
+  return archs.contains(archName);
+}
+
+/// Maps [arch] to the architecture name used by `lipo`, or null if the
+/// architecture is not supported on Apple platforms.
+String? _appleArchName(Architecture arch) => switch (arch) {
+  Architecture.arm64 => 'arm64',
+  Architecture.x64 => 'x86_64',
+  _ => null,
+};
 
 /// Downloads a zip from [uri], extracts [entryName] from it, and writes the
 /// result to [dest].
@@ -195,11 +251,7 @@ To resolve this, choose one of the following:
 /// bundler calls `otool` expecting a single-arch dylib, so we must extract
 /// the correct slice before handing the file to the output.
 Future<void> _thinMacOSLibIfNeeded(File lib, Architecture arch) async {
-  final archName = switch (arch) {
-    Architecture.arm64 => 'arm64',
-    Architecture.x64 => 'x86_64',
-    _ => null,
-  };
+  final archName = _appleArchName(arch);
   if (archName == null) return;
 
   final result = await Process.run('lipo', ['-info', lib.path]);

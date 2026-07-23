@@ -8,6 +8,20 @@ Dart / Flutter bindings for [ChiffonDB](https://github.com/szktty/chiffondb) —
 |------------------|-----------------|
 | 0.1.0            | 0.1.0           |
 
+### Supported platforms
+
+| Platform | Architecture     |
+|----------|------------------|
+| macOS    | arm64 (Apple silicon) |
+| iOS      | arm64            |
+| Linux    | x86_64           |
+| Windows  | x86_64           |
+| Android  | arm64, x86_64    |
+
+macOS and iOS are **arm64-only**; Intel (x86_64) Macs are not supported. The
+build hook contributes no native asset for x86_64 Apple targets, so a universal
+macOS build produces an arm64-only `chiffondb_ffi.framework`.
+
 ## Features
 
 - **`Connection` API** — create, open, and query a ChiffonDB database from Dart via FFI.

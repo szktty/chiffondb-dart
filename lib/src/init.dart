@@ -62,7 +62,6 @@ class ChiffonDb {
   /// arch names (`aarch64` / `x86_64`) MUST stay in sync with those.
   static List<String> _libraryCandidates() {
     final env = Platform.environment['CHIFFONDB_CORE_LIB'];
-    final arch = _rustArch();
     final candidates = <String>[];
 
     if (env != null && env.isNotEmpty) {
@@ -91,17 +90,12 @@ class ChiffonDb {
       candidates.add('chiffondb_ffi.framework/chiffondb_ffi');
 
       // Packaged build (arch-suffixed): the naming produced by `release.yml`
-      // for prebuilt GitHub Releases artifacts.
-      String framework(String a) =>
-          'chiffondb_ffi-$a-apple-darwin.framework/'
-          'chiffondb_ffi-$a-apple-darwin';
-      if (arch != null) {
-        candidates.add(framework(arch));
-      } else {
-        candidates
-          ..add(framework('aarch64'))
-          ..add(framework('x86_64'));
-      }
+      // for prebuilt GitHub Releases artifacts. macOS/iOS are arm64-only, so
+      // `aarch64` is the only candidate worth trying.
+      candidates.add(
+        'chiffondb_ffi-aarch64-apple-darwin.framework/'
+        'chiffondb_ffi-aarch64-apple-darwin',
+      );
 
       candidates.add('libchiffondb_ffi.dylib');
       return candidates;
@@ -131,28 +125,5 @@ class ChiffonDb {
     throw UnsupportedError(
       'ChiffonDB is not supported on ${Platform.operatingSystem}.',
     );
-  }
-
-  /// Maps the current ABI to the rust target arch name used in bundle names.
-  ///
-  /// Returns `'aarch64'` / `'x86_64'`, or `null` when the arch is unknown
-  /// (callers then try all known arch candidates).
-  static String? _rustArch() {
-    final abi = Abi.current();
-    if (abi == Abi.macosArm64 ||
-        abi == Abi.iosArm64 ||
-        abi == Abi.linuxArm64 ||
-        abi == Abi.windowsArm64 ||
-        abi == Abi.androidArm64) {
-      return 'aarch64';
-    }
-    if (abi == Abi.macosX64 ||
-        abi == Abi.iosX64 ||
-        abi == Abi.linuxX64 ||
-        abi == Abi.windowsX64 ||
-        abi == Abi.androidX64) {
-      return 'x86_64';
-    }
-    return null;
   }
 }
